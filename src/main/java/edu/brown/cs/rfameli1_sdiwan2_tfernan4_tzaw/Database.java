@@ -27,7 +27,7 @@ public class Database {
    * Get the Connection to the database.
    * @return The Connection to the database.
    */
-  public Connection getConn() {
+  public Connection getConnection() {
     return conn;
   }
 }

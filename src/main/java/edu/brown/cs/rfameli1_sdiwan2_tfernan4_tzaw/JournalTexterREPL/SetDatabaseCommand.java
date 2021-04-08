@@ -1,29 +1,25 @@
 package edu.brown.cs.rfameli1_sdiwan2_tfernan4_tzaw.JournalTexterREPL;
 
+import edu.brown.cs.rfameli1_sdiwan2_tfernan4_tzaw.Database;
 import edu.brown.cs.rfameli1_sdiwan2_tfernan4_tzaw.JournalTexterDB;
 import edu.brown.cs.rfameli1_sdiwan2_tfernan4_tzaw.REPL.ArgHolder;
 import edu.brown.cs.rfameli1_sdiwan2_tfernan4_tzaw.REPL.ArgTypes;
 import edu.brown.cs.rfameli1_sdiwan2_tfernan4_tzaw.REPL.REPLCommand;
-import edu.brown.cs.rfameli1_sdiwan2_tfernan4_tzaw.Spreadsheet.HeaderException;
-import edu.brown.cs.rfameli1_sdiwan2_tfernan4_tzaw.Spreadsheet.SpreadsheetData;
-import edu.brown.cs.rfameli1_sdiwan2_tfernan4_tzaw.Spreadsheet.SpreadsheetReader;
 
-import java.io.IOException;
-import java.util.Arrays;
+import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 
-public class LoadQuestionsCommand implements REPLCommand {
-
+public class SetDatabaseCommand implements REPLCommand {
   private final JournalTexterDB jtDatabase;
-  public LoadQuestionsCommand(JournalTexterDB jtDatabase) {
+
+  public SetDatabaseCommand(JournalTexterDB jtDatabase) {
     this.jtDatabase = jtDatabase;
   }
 
-
   @Override
   public String getCallWord() {
-    return "load";
+    return "database";
   }
 
   @Override
@@ -33,9 +29,12 @@ public class LoadQuestionsCommand implements REPLCommand {
 
   @Override
   public void run(ArgHolder arguments) {
-    String spreadsheetFile = arguments.nextString();
-    if (jtDatabase.loadDataFromSpreadsheet(spreadsheetFile)) {
-      System.out.println("Successfully loaded in questions");
+    String databaseName = arguments.nextString();
+    try {
+      Database questionsDB = new Database(databaseName);
+      jtDatabase.setConnection(questionsDB.getConnection());
+    } catch (SQLException | ClassNotFoundException e) {
+      e.printStackTrace();
     }
   }
 }

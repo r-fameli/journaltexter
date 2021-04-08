@@ -12,6 +12,7 @@ public class Question implements JournalText<HashMap<String, Integer>> {
     this.tags = tags;
   }
 
+  @Override
   public HashMap<String, Integer> getTags() {
     HashMap<String, Integer> tagMap = new HashMap<>(tags.size());
     Integer counter = 1;
