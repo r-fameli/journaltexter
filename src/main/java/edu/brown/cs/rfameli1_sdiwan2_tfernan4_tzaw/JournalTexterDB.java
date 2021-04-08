@@ -26,8 +26,12 @@ public class JournalTexterDB {
 
   public JournalTexterDB() { }
 
-  public void setConnection(Connection conn) {
-    this.conn = conn;
+  public void setConnection(Connection connection) {
+    this.conn = connection;
+  }
+
+  public Connection getConnection() {
+    return this.conn;
   }
 
   public void checkConnection() throws SQLException {
@@ -38,6 +42,7 @@ public class JournalTexterDB {
 
 
   public boolean loadDataFromSpreadsheet(String filename) {
+    // STILL BUGGY
     try {
       SpreadsheetData sd = SpreadsheetReader.parseSpreadsheet(filename, "\t",
           Arrays.asList("questions", "tags"));
@@ -79,6 +84,7 @@ public class JournalTexterDB {
       }
       return true;
     } catch (HeaderException | IOException | SQLException e) {
+      e.printStackTrace();
       System.out.println(e.getMessage());
       return false;
     }

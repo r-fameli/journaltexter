@@ -6,6 +6,7 @@ import edu.brown.cs.rfameli1_sdiwan2_tfernan4_tzaw.REPL.ArgHolder;
 import edu.brown.cs.rfameli1_sdiwan2_tfernan4_tzaw.REPL.ArgTypes;
 import edu.brown.cs.rfameli1_sdiwan2_tfernan4_tzaw.REPL.REPLCommand;
 
+import java.io.File;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
@@ -31,10 +32,21 @@ public class SetDatabaseCommand implements REPLCommand {
   public void run(ArgHolder arguments) {
     String databaseName = arguments.nextString();
     try {
-      Database questionsDB = new Database(databaseName);
-      jtDatabase.setConnection(questionsDB.getConnection());
-    } catch (SQLException | ClassNotFoundException e) {
-      e.printStackTrace();
+      // Validate the Database File Exists
+      File file = new File(databaseName);
+      if (!file.exists()) {
+        System.out.println("ERROR: Database file " + databaseName + " does not exist");
+      } else {
+        // Load connection and validate database.
+        Database questionsDB = new Database(databaseName);
+        jtDatabase.setConnection(questionsDB.getConnection());
+        System.out.println("Database connection set to " + databaseName);
+      }
+    } catch (SQLException e) {
+      System.out.println("ERROR: Invalid connection to database " + databaseName);
+    } catch (ClassNotFoundException e) {
+      System.out.println("ERROR: Class not found exception");
     }
+
   }
 }
