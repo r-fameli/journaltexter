@@ -15,6 +15,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +47,6 @@ public class JournalTexterDB {
     ps.setString(1, tableName);
     ps.executeUpdate();
   }
-
 
   public boolean loadDataFromSpreadsheet(String filename) {
     try {
@@ -105,40 +105,25 @@ public class JournalTexterDB {
     ResultSet questionsResults = ps.executeQuery();
     while (questionsResults.next()) {
       String questionText = questionsResults.getString(1);
-      ps = conn.prepareStatement("SELECT tag_text FROM tags WHERE "
-          + "(SELECT question_id FROM questions WHERE question_text=?)");
-      Set<String> tags = new HashSet<>();
-      ResultSet tagsResults = ps.executeQuery();
-      while (tagsResults.next()) {
-        tags.add(tagsResults.getString(1));
-      }
-      questions.add(new Question(questionText, tags));
+      questions.add(new Question(questionText));
     }
     return questions;
   }
 
 
-  public List<Entry<JournalText>> getUserEntriesByUserId(Integer userId) throws SQLException {
+  public List<Entry<JournalText>> getUserEntriesByUsername(String username) throws SQLException {
     checkConnection();
-    PreparedStatement ps = conn.prepareStatement("SELECT * FROM entries WHERE user_id=?");
-    ps.setInt(1, userId);
+    PreparedStatement ps = conn.prepareStatement("SELECT * FROM entries WHERE author=?");
+    ps.setString(1, username);
     ResultSet rs = ps.executeQuery();
     while (rs.next()) {
-
+      Integer id = rs.getInt(1);
+      Date date = rs.getDate(2);
+      String text = rs.getString(3);
+      String author = rs.getString(4);
+      // TODO make this into
     }
-
-
     return null;
-    // For every entry, I would have to query the database to find the tags for every question
-    // that was presented in the entry given the current structure of the classes
-    // TODO make Question not require tags to create?
-    // TODO
-//      List<Entry> userEntries = new ArrayList<>();
-//      while (rs.next()) {
-//        userEntries.add(new Entry(
-//
-//        ))
-//      }
   }
 
   public Set<String> getAllTagsFromDB() throws SQLException {

@@ -1,10 +1,8 @@
 package edu.brown.cs.rfameli1_sdiwan2_tfernan4_tzaw.Journal;
 
-import java.util.TreeMap;
 
 public class Response implements JournalText {
   private final String text;
-  private TreeMap<String, Integer> tags = null;
 
   public Response(String responseText) {
     this.text = responseText;
@@ -23,11 +21,5 @@ public class Response implements JournalText {
   @Override
   public String stringRepresentation() {
     return "{" + text + "}";
-  }
-
-  @Override
-  public TreeMap<String, Integer> getTags() {
-    // TODO add wordVecCounter stuff in here
-    return this.tags;
   }
 }
