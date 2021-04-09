@@ -45,7 +45,7 @@ public class JournalTexterDB {
     // STILL BUGGY
     try {
       SpreadsheetData sd = SpreadsheetReader.parseSpreadsheet(filename, "\t",
-          Arrays.asList("questions", "tags"));
+          Arrays.asList("Question", "Tags"));
       List<List<String>> rows = sd.getRows();
       PreparedStatement ps;
       ResultSet rs;
@@ -121,7 +121,7 @@ public class JournalTexterDB {
     return null;
     // For every entry, I would have to query the database to find the tags for every question
     // that was presented in the entry given the current structure of the classes
-
+    // TODO make Question not require tags to create?
     // TODO
 //      List<Entry> userEntries = new ArrayList<>();
 //      while (rs.next()) {
@@ -129,6 +129,17 @@ public class JournalTexterDB {
 //
 //        ))
 //      }
+  }
+
+  public Set<String> getAllTagsFromDB() throws SQLException {
+    checkConnection();
+    PreparedStatement ps = conn.prepareStatement("SELECT DISTINCT tag_text FROM tags");
+    ResultSet rs = ps.executeQuery();
+    Set<String> allTags = new HashSet<>();
+    while (rs.next()) {
+      allTags.add(rs.getString(1));
+    }
+    return allTags;
   }
 
 }
