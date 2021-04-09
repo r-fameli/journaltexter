@@ -2,8 +2,8 @@ package edu.brown.cs.rfameli1_sdiwan2_tfernan4_tzaw.Journal;
 
 import java.util.TreeMap;
 
-public class Response implements JournalText<TreeMap<String, Integer>> {
-  private String text;
+public class Response implements JournalText {
+  private final String text;
   private TreeMap<String, Integer> tags = null;
 
   public Response(String responseText) {

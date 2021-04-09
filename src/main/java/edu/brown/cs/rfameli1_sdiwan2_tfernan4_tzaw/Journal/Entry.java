@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class Entry<T extends JournalText<TreeMap<String, Integer>>> {
+public class Entry<T extends JournalText> {
   private Date date;
   private String entryString;
   private List<T> questionsAndResponses;

@@ -2,8 +2,9 @@ package edu.brown.cs.rfameli1_sdiwan2_tfernan4_tzaw.Journal;
 
 import java.util.HashMap;
 import java.util.Set;
+import java.util.TreeMap;
 
-public class Question implements JournalText<HashMap<String, Integer>> {
+public class Question implements JournalText {
   private final String text;
   private final Set<String> tags;
 
@@ -13,10 +14,10 @@ public class Question implements JournalText<HashMap<String, Integer>> {
   }
 
   @Override
-  public HashMap<String, Integer> getTags() {
-    HashMap<String, Integer> tagMap = new HashMap<>(tags.size());
+  public TreeMap<String, Integer> getTags() {
+    TreeMap<String, Integer> tagMap = new TreeMap<>();
     Integer counter = 1;
-    for (String tag: tags) {
+    for (String tag : tags) {
       tagMap.put(tag, counter);
       counter++;
     }

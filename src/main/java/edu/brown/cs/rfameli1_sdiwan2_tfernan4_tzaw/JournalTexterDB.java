@@ -40,9 +40,15 @@ public class JournalTexterDB {
     }
   }
 
+  public void clearTable(String tableName) throws SQLException {
+    checkConnection();
+    PreparedStatement ps = conn.prepareStatement("DELETE FROM ?");
+    ps.setString(1, tableName);
+    ps.executeUpdate();
+  }
+
 
   public boolean loadDataFromSpreadsheet(String filename) {
-    // STILL BUGGY
     try {
       SpreadsheetData sd = SpreadsheetReader.parseSpreadsheet(filename, "\t",
           Arrays.asList("Question", "Tags"));
@@ -84,7 +90,6 @@ public class JournalTexterDB {
       }
       return true;
     } catch (HeaderException | IOException | SQLException e) {
-      e.printStackTrace();
       System.out.println(e.getMessage());
       return false;
     }
@@ -113,11 +118,16 @@ public class JournalTexterDB {
   }
 
 
-  public List<Entry> getUserEntriesByUserId(Integer userId) throws SQLException {
+  public List<Entry<JournalText>> getUserEntriesByUserId(Integer userId) throws SQLException {
     checkConnection();
     PreparedStatement ps = conn.prepareStatement("SELECT * FROM entries WHERE user_id=?");
     ps.setInt(1, userId);
     ResultSet rs = ps.executeQuery();
+    while (rs.next()) {
+
+    }
+
+
     return null;
     // For every entry, I would have to query the database to find the tags for every question
     // that was presented in the entry given the current structure of the classes
