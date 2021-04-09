@@ -12,9 +12,9 @@ import java.util.TreeMap;
  * @param <T> a class that implements the JournalText interface
  */
 public class Entry<T extends JournalText> {
-  private Date date;
-  private String stringRepresentation;
-  private List<T> questionsAndResponses;
+  private final Date date;
+  private final String stringRepresentation;
+  private final List<T> questionsAndResponses;
   private TreeMap<String, Integer> tags = null;
 
   public Entry(Date date, List<T> questionsAndResponses) {
