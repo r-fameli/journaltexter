@@ -66,7 +66,12 @@ public final class JournalTexterDB {
     if (db == null) {
       throw new SQLException("JournalTexter Database has not been set");
     } else {
-      conn = db.getNewConnection();
+      if (conn == null) {
+        conn = db.getNewConnection();
+      }
+      if (conn.isClosed()) {
+        conn = db.getNewConnection();
+      }
     }
   }
 
@@ -346,16 +351,20 @@ public final class JournalTexterDB {
    */
   public void registerUser(String username, byte[] passwordBytes)
       throws SQLException, FailedLoginException {
-    setupConnection();
-    // Check if the username has been registered already
-    if (usernameIsRegistered(username)) {
-      throw new FailedLoginException("Username " + username + " already registered");
+    try {
+      setupConnection();
+      // Check if the username has been registered already
+      if (usernameIsRegistered(username)) {
+        throw new FailedLoginException("Username " + username + " already registered");
+      }
+      PreparedStatement ps = conn.prepareStatement("INSERT INTO users VALUES (?, ?);");
+      ps.setString(1, username);
+      ps.setBytes(2, passwordBytes);
+      ps.executeUpdate();
+      DbUtils.closeDatabaseObjectsQuietly(ps, conn);
+    } catch (Exception e) {
+      e.printStackTrace();
     }
-    PreparedStatement ps = conn.prepareStatement("INSERT INTO users VALUES (?, ?);");
-    ps.setString(1, username);
-    ps.setBytes(2, passwordBytes);
-    ps.executeUpdate();
-    DbUtils.closeDatabaseObjectsQuietly(ps, conn);
   }
 
   /**

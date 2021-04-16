@@ -22,6 +22,7 @@ public class Database {
   public Database(String filename) throws SQLException, ClassNotFoundException {
     Class.forName("org.sqlite.JDBC");
     sqlUrl = "jdbc:sqlite:" + filename;
+    getNewConnection();
   }
 
   /**

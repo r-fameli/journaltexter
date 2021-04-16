@@ -23,7 +23,7 @@ public class DatabaseFunctionTester {
     if (!newDb.createNewFile()) {
       return false;
     }
-    Database db = new Database(filename);
+    db = new Database(filename);
     loadAllTables(db);
     return true;
   }
