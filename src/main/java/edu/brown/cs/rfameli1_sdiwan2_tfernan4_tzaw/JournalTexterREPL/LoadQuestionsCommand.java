@@ -4,6 +4,8 @@ import edu.brown.cs.rfameli1_sdiwan2_tfernan4_tzaw.JournalTexterDB;
 import edu.brown.cs.rfameli1_sdiwan2_tfernan4_tzaw.REPL.ArgHolder;
 import edu.brown.cs.rfameli1_sdiwan2_tfernan4_tzaw.REPL.ArgTypes;
 import edu.brown.cs.rfameli1_sdiwan2_tfernan4_tzaw.REPL.REPLCommand;
+
+import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 
@@ -28,8 +30,12 @@ public class LoadQuestionsCommand implements REPLCommand {
   @Override
   public void run(ArgHolder arguments) {
     String spreadsheetFile = arguments.nextString();
-    if (jtDatabase.loadDataFromSpreadsheet(spreadsheetFile)) {
-      System.out.println("Successfully loaded in questions");
+    try {
+      if (jtDatabase.loadDataFromSpreadsheet(spreadsheetFile)) {
+        System.out.println("Successfully loaded in questions");
+      }
+    } catch (SQLException e) {
+      System.out.println("ERROR: " + e.getMessage());
     }
   }
 }

@@ -8,7 +8,6 @@ import edu.brown.cs.rfameli1_sdiwan2_tfernan4_tzaw.Journal.JournalTextType;
 import edu.brown.cs.rfameli1_sdiwan2_tfernan4_tzaw.Journal.Question;
 import edu.brown.cs.rfameli1_sdiwan2_tfernan4_tzaw.JournalTexterDB;
 import edu.brown.cs.rfameli1_sdiwan2_tfernan4_tzaw.encryption.Encryptor;
-import edu.brown.cs.rfameli1_sdiwan2_tfernan4_tzaw.wordCountVec.WordCountVec;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import spark.Request;

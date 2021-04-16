@@ -1,6 +1,6 @@
 package edu.brown.cs.rfameli1_sdiwan2_tfernan4_tzaw.JournalTexterREPL;
 
-import edu.brown.cs.rfameli1_sdiwan2_tfernan4_tzaw.Database;
+import edu.brown.cs.rfameli1_sdiwan2_tfernan4_tzaw.Database.Database;
 import edu.brown.cs.rfameli1_sdiwan2_tfernan4_tzaw.JournalTexterDB;
 import edu.brown.cs.rfameli1_sdiwan2_tfernan4_tzaw.REPL.ArgHolder;
 import edu.brown.cs.rfameli1_sdiwan2_tfernan4_tzaw.REPL.ArgTypes;
@@ -38,8 +38,8 @@ public class SetDatabaseCommand implements REPLCommand {
         System.out.println("ERROR: Database file " + databaseName + " does not exist");
       } else {
         // Load connection and validate database.
-        Database questionsDB = new Database(databaseName);
-        jtDatabase.setConnection(questionsDB.getConnection());
+        Database journalDb = new Database(databaseName);
+        jtDatabase.setDatabase(journalDb);
         System.out.println("Database connection set to " + databaseName);
       }
     } catch (SQLException e) {

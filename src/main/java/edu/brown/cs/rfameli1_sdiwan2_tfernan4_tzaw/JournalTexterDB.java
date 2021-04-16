@@ -1,5 +1,7 @@
 package edu.brown.cs.rfameli1_sdiwan2_tfernan4_tzaw;
 
+import edu.brown.cs.rfameli1_sdiwan2_tfernan4_tzaw.Database.Database;
+import edu.brown.cs.rfameli1_sdiwan2_tfernan4_tzaw.Database.DbUtils;
 import edu.brown.cs.rfameli1_sdiwan2_tfernan4_tzaw.Journal.Entry;
 import edu.brown.cs.rfameli1_sdiwan2_tfernan4_tzaw.Journal.JournalText;
 import edu.brown.cs.rfameli1_sdiwan2_tfernan4_tzaw.Journal.Question;
@@ -24,7 +26,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 /**
  * Handles all interactions with JournalTexter-related databases. Implements the Singleton design
@@ -32,15 +33,18 @@ import java.util.regex.Pattern;
  */
 public final class JournalTexterDB {
   private static final JournalTexterDB INSTANCE = new JournalTexterDB();
+  private Database db = null;
   private Connection conn = null;
 
   /**
    * Creates an instance of JournalTexterDB.
    */
-  private JournalTexterDB() { }
+  private JournalTexterDB() {
+  }
 
   /**
    * Retrieves the current instance of JournalTexterDB.
+   *
    * @return the current instance of JournalTexterDB
    */
   public static JournalTexterDB getInstance() {
@@ -48,38 +52,33 @@ public final class JournalTexterDB {
   }
 
   /**
-   * Sets the database connection to the specified connection.
-   * @param connection a Connection to a database
+   * Sets the database to be used by JournalTexter.
+   * @param database the database to be used
    */
-  public void setConnection(Connection connection) {
-    this.conn = connection;
+  public void setDatabase(Database database) {
+    this.db = database;
   }
-
   /**
-   * Gets the current database connection.
-   * @return a Connection for the current database
-   */
-  public Connection getConnection() {
-    return this.conn;
-  }
-
-  /**
-   * Checks that a connection to a database has been established.
+   * Checks that a database has been set. If it has, create a new connection.
    * @throws SQLException if there has been no connection set up
    */
-  public void checkConnection() throws SQLException {
-    if (conn == null) {
-      throw new SQLException("Database connection has not been set up in JournalTexter Database");
+  public void setupConnection() throws SQLException {
+    if (db == null) {
+      throw new SQLException("JournalTexter Database has not been set");
+    } else {
+      conn = db.getNewConnection();
     }
   }
 
   /**
    * Loads all the questions and tags from a spreadsheet into the questions and tags tables in the
    * current database.
+   *
    * @param filename the name of the spreadsheet file to be read from (must be in .tsv format)
    * @return true if the data was successfully loaded, else false
    */
-  public boolean loadDataFromSpreadsheet(String filename) {
+  public boolean loadDataFromSpreadsheet(String filename) throws SQLException {
+    setupConnection();
     try {
       SpreadsheetData sd = SpreadsheetReader.parseSpreadsheet(filename, "\t",
           Arrays.asList("Question", "Tags"));
@@ -90,9 +89,9 @@ public final class JournalTexterDB {
       PreparedStatement ps;
       ResultSet rs;
 
-      for (List<String> r : rows) {
+      for (List<String> row : rows) {
         // Check if the question already exists in the table
-        String question = r.get(0);
+        String question = row.get(0);
         ps = conn.prepareStatement("SELECT * FROM questions WHERE text=?;");
         ps.setString(1, question);
         rs = ps.executeQuery();
@@ -108,9 +107,11 @@ public final class JournalTexterDB {
         ps.setString(1, question);
         rs = ps.executeQuery();
         int questionId = rs.getInt(1);
+        DbUtils.closeQuietly(rs);
+        DbUtils.closeQuietly(ps);
 
         // Get the tags from the second column of the spreadsheet
-        String[] tags = r.get(1).split(",");
+        String[] tags = row.get(1).split(",");
         for (String tag : tags) {
           // Check if the tag has been inserted in the tags table
           ps = conn.prepareStatement("SELECT * FROM tags WHERE text=?;");
@@ -127,6 +128,8 @@ public final class JournalTexterDB {
           ps.setString(1, tag);
           rs = ps.executeQuery();
           int tagId = rs.getInt(1);
+          DbUtils.closeQuietly(rs);
+          DbUtils.closeQuietly(ps);
 
           // Check if the tag-question relation already exists in the database
           ps = conn.prepareStatement("SELECT * FROM tags_to_questions "
@@ -141,9 +144,12 @@ public final class JournalTexterDB {
             ps.setInt(1, tagId);
             ps.setInt(2, questionId);
             ps.executeUpdate();
+            DbUtils.closeQuietly(rs);
+            DbUtils.closeQuietly(ps);
           }
         }
       }
+      DbUtils.closeQuietly(conn);
       return true;
     } catch (HeaderException | IOException | SQLException | InvalidFileException e) {
       System.out.println("ERROR: " + e.getMessage());
@@ -154,13 +160,14 @@ public final class JournalTexterDB {
 
   /**
    * Finds all related questions from a tag in the database.
+   *
    * @param tag a String representing the tag
    * @return a List of all Questions that contain the given tag
    * @throws SQLException if the connection has not been established or if an error occurs with
-   * a SQL statement
+   *                      a SQL statement
    */
   public List<Question> findQuestionsFromTag(String tag) throws SQLException {
-    checkConnection();
+    setupConnection();
     List<Question> questions = new ArrayList<>();
 
     PreparedStatement ps = conn.prepareStatement("SELECT text FROM questions "
@@ -172,18 +179,20 @@ public final class JournalTexterDB {
       String questionText = questionsResults.getString(1);
       questions.add(new Question(questionText));
     }
+    DbUtils.closeDatabaseObjectsQuietly(ps, conn);
     return questions;
   }
 
   /**
    * Gets all the entries of a user by using their username.
+   *
    * @param username the user's unique username
    * @return a List of entries as instances of the Entry class
    * @throws SQLException if the connection has not been established or if an error occurs with one
-   * of the SQL statements
+   *                      of the SQL statements
    */
   public List<Entry<JournalText>> getUserEntriesByUsername(String username) throws SQLException {
-    checkConnection();
+    setupConnection();
     PreparedStatement ps = conn.prepareStatement("SELECT * FROM entries WHERE author=?");
     ps.setString(1, username);
     ResultSet rs = ps.executeQuery();
@@ -200,39 +209,43 @@ public final class JournalTexterDB {
           .toLocalDate();
       entries.add(new Entry<>(id, cleanedDate, stringRepresentation));
     }
+    DbUtils.closeDatabaseObjectsQuietly(rs, ps, conn);
     return entries;
   }
 
   /**
    * Retrieves an entry from the database using its id.
+   *
    * @param entryId the id of the entry
    * @return an Entry object
    * @throws SQLException if the database connection has not been established or if an error occurs
-   * with the
+   *                      with the
    */
   public Entry<JournalText> getEntryById(Integer entryId) throws SQLException {
-    checkConnection();
+    setupConnection();
     PreparedStatement ps = conn.prepareStatement("SELECT * FROM entries WHERE id=?");
     ps.setInt(1, entryId);
     ResultSet rs = ps.executeQuery();
     Integer id = rs.getInt(1);
     LocalDate date = DateConversion.dateToLocalDate(rs.getDate(2));
     String entryString = rs.getString(3);
+    DbUtils.closeDatabaseObjectsQuietly(rs, ps, conn);
     return new Entry<>(id, date, entryString);
   }
 
   /**
    * Creates a row within the entries table representing a new entry.
-   * @param date the date the entry was created
+   *
+   * @param date      the date the entry was created
    * @param entryText the formatted text to start the entry
-   * @param username the author of the entry
+   * @param username  the author of the entry
    * @return the id of the created entry
    * @throws SQLException if connection has not been established or if an error occurs interacting
-   * with the database
+   *                      with the database
    */
   public Integer addUserEntry(LocalDate date, String entryText, String username)
       throws SQLException {
-    checkConnection();
+    setupConnection();
     Date sqlDate = java.sql.Date.valueOf(date);
 
     PreparedStatement ps = conn.prepareStatement("INSERT INTO entries "
@@ -245,18 +258,21 @@ public final class JournalTexterDB {
     // Retrieve the entry of the created id
     ps = conn.prepareStatement("SELECT last_insert_rowid();");
     ResultSet rs = ps.executeQuery();
-    return rs.getInt(1);
+    int entryId = rs.getInt(1);
+    DbUtils.closeDatabaseObjectsQuietly(rs, ps, conn);
+    return rs.getInt(entryId);
   }
 
   /**
    * Updates an entry by adding new Questions and Responses.
+   *
    * @param entryId the id of the entry to update
-   * @param toAdd the Questions and Responses to add
+   * @param toAdd   the Questions and Responses to add
    * @throws SQLException if connection has not been established or if an error occurs interacting
-   * with the database
+   *                      with the database
    */
   public void addToEntry(Integer entryId, List<JournalText> toAdd) throws SQLException {
-    checkConnection();
+    setupConnection();
     PreparedStatement ps = conn.prepareStatement("SELECT entry_text FROM entries WHERE id=?");
     ps.setInt(1, entryId);
     ResultSet rs = ps.executeQuery();
@@ -267,48 +283,53 @@ public final class JournalTexterDB {
     ps = conn.prepareStatement("UPDATE entries SET entry_text=? WHERE id=?");
     ps.setString(1, entryText.toString());
     ps.setInt(2, entryId);
+    DbUtils.closeDatabaseObjectsQuietly(rs, ps, conn);
     ps.executeUpdate();
   }
 
   /**
    * Retrieves all tags from the tags table in the database.
+   *
    * @return a Set of all tags as Strings
    * @throws SQLException if connection has not been established or if an error occurs retrieving
-   * from the database
+   *                      from the database
    */
   public Set<String> getAllTagsFromDB() throws SQLException {
-    checkConnection();
+    setupConnection();
     PreparedStatement ps = conn.prepareStatement("SELECT text FROM tags;");
     ResultSet rs = ps.executeQuery();
     Set<String> allTags = new HashSet<>();
     while (rs.next()) {
       allTags.add(rs.getString(1));
     }
+    DbUtils.closeDatabaseObjectsQuietly(rs, ps, conn);
     return allTags;
   }
 
 
-
   /**
    * Checks if the input log in information correctly matches the database.
-   * @param username the input username
+   *
+   * @param username           the input username
    * @param inputPasswordBytes the input password as a byte array
-   * @throws SQLException if the database connection has not been set up or if a SQL-related error
-   * occurs
+   * @throws SQLException         if the database connection has not been set up or if a SQL-related error
+   *                              occurs
    * @throws FailedLoginException if the login credentials do not match those stored in the database
    */
   public void authenticateUser(String username, byte[] inputPasswordBytes)
       throws SQLException, FailedLoginException {
-    checkConnection();
+    setupConnection();
 
     PreparedStatement ps = conn.prepareStatement("SELECT * FROM users WHERE username=?;");
     ps.setString(1, username);
     ResultSet rs = ps.executeQuery();
 
     if (!rs.next()) {
+      DbUtils.closeDatabaseObjectsQuietly(rs, ps, conn);
       throw new FailedLoginException("No user found with username " + username);
     }
     byte[] registeredPasswordBytes = rs.getBytes(2);
+    DbUtils.closeDatabaseObjectsQuietly(rs, ps, conn);
     if (!Arrays.equals(inputPasswordBytes, registeredPasswordBytes)) {
       throw new FailedLoginException("Incorrect password");
     }
@@ -316,15 +337,16 @@ public final class JournalTexterDB {
 
   /**
    * Registers a new user into the database.
-   * @param username the username to be registered
+   *
+   * @param username      the username to be registered
    * @param passwordBytes a byte array representing the password of the user
-   * @throws SQLException if the database connection has not been established or if an error
-   * occurs inserting into the database
+   * @throws SQLException         if the database connection has not been established or if an error
+   *                              occurs inserting into the database
    * @throws FailedLoginException if registering the user failed
    */
   public void registerUser(String username, byte[] passwordBytes)
       throws SQLException, FailedLoginException {
-    checkConnection();
+    setupConnection();
     // Check if the username has been registered already
     if (usernameIsRegistered(username)) {
       throw new FailedLoginException("Username " + username + " already registered");
@@ -333,19 +355,23 @@ public final class JournalTexterDB {
     ps.setString(1, username);
     ps.setBytes(2, passwordBytes);
     ps.executeUpdate();
+    DbUtils.closeDatabaseObjectsQuietly(ps, conn);
   }
 
   /**
    * Checks if the given username is registered in the database already.
+   *
    * @param username the username to check
    * @return true if the username is registered, else false
    * @throws SQLException if an error occurs with querying the SQL database
    */
   public boolean usernameIsRegistered(String username) throws SQLException {
-    checkConnection();
+    setupConnection();
     PreparedStatement ps = conn.prepareStatement("SELECT * FROM users WHERE username=?;");
     ps.setString(1, username);
     ResultSet rs = ps.executeQuery();
-    return rs.next();
+    boolean usernameAlreadyRegistered = rs.next();
+    DbUtils.closeDatabaseObjectsQuietly(rs, ps, conn);
+    return usernameAlreadyRegistered;
   }
 }

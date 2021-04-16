@@ -35,6 +35,7 @@ public class SentimentAnalysis {
     // https://www.edureka.co/community/358/how-to-execute-a-python-file-with-few-arguments-in-java
     Process process;
     try {
+      System.out.println("in line 38");
       process = Runtime.getRuntime().exec(new String[] {
           "python.exe",
           "server/python/script_python.py",
@@ -49,6 +50,7 @@ public class SentimentAnalysis {
     String line;
     String finalOutput = null;
     try {
+      System.out.println("in line 53");
       while ((line = reader.readLine()) != null) {
 //        System.out.println("stdout: " + line);
         finalOutput = line;

@@ -1,5 +1,8 @@
 package edu.brown.cs.rfameli1_sdiwan2_tfernan4_tzaw;
 
+import edu.brown.cs.rfameli1_sdiwan2_tfernan4_tzaw.Database.Database;
+import edu.brown.cs.rfameli1_sdiwan2_tfernan4_tzaw.Database.DbUtils;
+
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
@@ -8,27 +11,25 @@ import java.sql.SQLException;
 
 public class DatabaseFunctionTester {
   private DatabaseFunctionTester() { }
-  private static Connection conn = null;
+  private static Database db = null;
 
-  public static Connection getConnection() {
-    return conn;
+  public static Database getDatabase() {
+    return db;
   }
-
 
   public static boolean createEmptyDatabase(String filename)
       throws IOException, SQLException, ClassNotFoundException {
     File newDb = new File(filename);
-    deleteFileIfExists(filename);
     if (!newDb.createNewFile()) {
       return false;
     }
     Database db = new Database(filename);
-    conn = db.getConnection();
-    loadAllTables(db.getConnection());
+    loadAllTables(db);
     return true;
   }
 
-  private static void loadAllTables(Connection conn) throws SQLException {
+  private static void loadAllTables(Database db) throws SQLException {
+    Connection conn = db.getNewConnection();
     PreparedStatement ps = conn.prepareStatement(
         "CREATE TABLE \"entries\" ( " +
         "  \"id\"  INTEGER NOT NULL UNIQUE, " +
@@ -39,6 +40,8 @@ public class DatabaseFunctionTester {
         "  PRIMARY KEY(\"id\" AUTOINCREMENT) " +
         ")");
     ps.executeUpdate();
+    DbUtils.closeDatabaseObjectsQuietly(ps, conn);
+    conn = db.getNewConnection();
 
     ps = conn.prepareStatement(
         "CREATE TABLE \"entries_to_questions\" ( " +
@@ -49,6 +52,9 @@ public class DatabaseFunctionTester {
             ")"
     );
     ps.executeUpdate();
+    DbUtils.closeDatabaseObjectsQuietly(ps, conn);
+    conn = db.getNewConnection();
+
 
     ps = conn.prepareStatement(
         "CREATE TABLE \"questions\" ( " +
@@ -58,6 +64,8 @@ public class DatabaseFunctionTester {
             ")"
     );
     ps.executeUpdate();
+    DbUtils.closeDatabaseObjectsQuietly(ps, conn);
+    conn = db.getNewConnection();
 
     ps = conn.prepareStatement(
         "CREATE TABLE \"tags\" ( " +
@@ -67,6 +75,8 @@ public class DatabaseFunctionTester {
             ")"
     );
     ps.executeUpdate();
+    DbUtils.closeDatabaseObjectsQuietly(ps, conn);
+    conn = db.getNewConnection();
 
     ps = conn.prepareStatement(
         "CREATE TABLE \"tags_to_entries\" ( " +
@@ -77,6 +87,8 @@ public class DatabaseFunctionTester {
             ")"
     );
     ps.executeUpdate();
+    DbUtils.closeDatabaseObjectsQuietly(ps, conn);
+    conn = db.getNewConnection();
 
     ps = conn.prepareStatement(
         "CREATE TABLE \"tags_to_questions\" ( " +
@@ -87,6 +99,8 @@ public class DatabaseFunctionTester {
             ")"
     );
     ps.executeUpdate();
+    DbUtils.closeDatabaseObjectsQuietly(ps, conn);
+    conn = db.getNewConnection();
 
     ps = conn.prepareStatement(
         "CREATE TABLE \"users\" ( " +
@@ -96,13 +110,14 @@ public class DatabaseFunctionTester {
             ")"
     );
     ps.executeUpdate();
+    DbUtils.closeDatabaseObjectsQuietly(ps, conn);
   }
 
   public static void deleteFileIfExists(String filename) throws IOException {
     File f = new File(filename);
     if (f.exists()) {
       if (!f.delete()) {
-        throw new IOException("File " + filename + " could not be deleted in DatabaseGenerator.deleteDatabaseFile");
+        throw new IOException("File " + filename + " could not be deleted in DatabaseFunctionTester.deleteDatabaseFile");
       }
     }
   }
